@@ -1,8 +1,6 @@
 const router = require("express").Router();
-const admin = require('firebase-admin');
-admin.initializeApp();
 
-const firestore = admin.firestore();
+const firestore = require('../firestore')
 
 router.route('/')
     .post((req, res) => {
@@ -11,7 +9,7 @@ router.route('/')
             .then(user => {
                 return res.status(200).json({ "id": user.id });
             }).catch((error) => {
-                return res.status(400).json({ "message": "Unable to connect to Firestore.1" });
+                return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
             });
     })
 
@@ -26,7 +24,7 @@ router.route('/:userId')
                 return res.status(400).json({ "message": "User ID not found." });
             }
         }).catch((error) => {
-            return res.status(400).json({ "message": "Unable to connect to Firestore.2" });
+            return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
         });
     });
 
