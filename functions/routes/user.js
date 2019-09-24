@@ -26,6 +26,22 @@ router.route('/:userId')
         }).catch((error) => {
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
         });
-    });
+    })
+    .put((req, res) => {
+        var doc = firestore.collection("userProfile").doc(req.params.userId);
+        doc.update(req.body).then(() => {
+            return res.status(200).json({"message": "Successful update"});
+        }).catch(() => {
+            return res.status(404).json({"message": "Fail"});
+        })
+    })
+    .delete((req, res) => {
+        var doc = firestore.collection("userProfile").doc(req.params.userId);
+        doc.delete().then(() => {
+            return res.status(200);
+        }).catch(() => {
+            return res.status(404);
+        })
+    })
 
 module.exports = router;
