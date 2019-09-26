@@ -4,7 +4,7 @@ const firestore = require('../firestore')
 
 router.route('/')
     .post((req, res) => {
-        var doc = firestore.collection("userProfile")
+        var doc = firestore.collection("user")
         doc.add(req.body)
             .then(user => {
                 return res.status(200).json({ "id": user.id });
@@ -15,20 +15,20 @@ router.route('/')
 
 router.route('/:userId')
     .get((req, res) => {
-        var doc = firestore.collection("userProfile").doc(req.params.userId);
+        var doc = firestore.collection("user").doc(req.params.userId);
 
         doc.get().then(user => {
             if (user.exists) {
                 return res.status(200).json({ "id": user.id, "user": user.data() });
             } else {
-                return res.status(400).json({ "message": "User ID not found." });
+                return res.status(404).json({ "message": "User ID not found." });
             }
         }).catch((error) => {
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
         });
     })
     .put((req, res) => {
-        var doc = firestore.collection("userProfile").doc(req.params.userId);
+        var doc = firestore.collection("user").doc(req.params.userId);
         doc.update(req.body).then(() => {
             return res.status(200).json({"message": "Successful update"});
         }).catch(() => {
@@ -36,11 +36,11 @@ router.route('/:userId')
         })
     })
     .delete((req, res) => {
-        var doc = firestore.collection("userProfile").doc(req.params.userId);
+        var doc = firestore.collection("user").doc(req.params.userId);
         doc.delete().then(() => {
-            return res.status(200);
+            return res.status(200).json({"message": "Successful Delete"});
         }).catch(() => {
-            return res.status(404);
+            return res.status(404).json({"message": "Fail"});
         })
     })
 
