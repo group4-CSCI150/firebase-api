@@ -55,7 +55,7 @@ router.route('/:userId')
         })
     })
 
-router.route('/:username/all')
+router.route('/find/:username')
     .get((req, res) => {
         var doc = firestore.collection("user").where("name", "=" ,req.params.username);
         var all = {'users' : []};
