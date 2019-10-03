@@ -5,6 +5,7 @@ const firestore = require('../firestore')
 router.route('/')
     .post((req, res) => {
         var doc = firestore.collection("user")
+        if (req.body)
         doc.add(req.body)
             .then(user => {
                 return res.status(200).json({ "id": user.id });
