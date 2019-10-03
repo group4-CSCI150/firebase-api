@@ -64,6 +64,10 @@ router.route('/find/:username')
             users.forEach(element => {
                 all['users'].push({"id": element.id,  "user": element.data() });
             });
+            if (all['users'].isEmpty())
+            {
+                return res.status(200).json({"message": "No user found. USER"});
+            }
             return res.status(200).json(all);
         }).catch((error) => {
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
