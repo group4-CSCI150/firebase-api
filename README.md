@@ -19,4 +19,4 @@ Finder
                  - Friend
                      - list of refs to :username
                  - Intrests
-                     - key value pair
+                     - list of key value pair
