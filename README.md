@@ -1,6 +1,6 @@
-/user               get|post
-/user/[userid]      get|post|delete
-/user/find/[name]   get
+/user               get | post <br>
+/user/:userid       get | post | delete <br>
+/user/find/:name    get <br>
 
 Finder
 |
@@ -25,3 +25,4 @@ Finder
                  - Intrests
                     |
                      - key value pair
+
