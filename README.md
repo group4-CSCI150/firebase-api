@@ -13,6 +13,7 @@ Finder
                  - last
                  - Birthday
                  - email
+                 - password
                  - description
                  - picture (ref to folder on firebase Storage with :username)
                  - Friend
