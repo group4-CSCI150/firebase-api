@@ -1,16 +1,11 @@
 const router = require("express").Router();
 const firestore = require('../firestore')
 
-var finder = firestore.collection("Finder");
+var users = firestore.collection("Finder").doc("FS").collection("User");
 
-/*router.use('*', (req, res, next) => {
-    Users = firestore.collection("Finder").doc(req.params.orgId).collection("User");
-    return next();
-})
-*/
-router.route('/:orgId')
+router.route('/')
     .post((req, res) => {
-        var doc = finder.doc(req.parans.orgId).collection("User");
+        var doc = users;
         if (req.body)
         doc.add(req.body)
             .then(user => {
@@ -20,7 +15,7 @@ router.route('/:orgId')
             });
     })
     .get((req, res) => {
-        var doc = finder.doc(req.parans.orgId).collection("User").orderBy("name");
+        var doc = users.orderBy("name");
         var all = {'users' : []};
         doc.get().then(users => {
             users.forEach(element => {
@@ -32,9 +27,9 @@ router.route('/:orgId')
         });
     })
 
-router.route('/:orgId/:userId')
+router.route('/byID/:userId')
     .get((req, res) => {
-        var doc = firestore.collection("Finder").doc(req.params.orgId).collection("User").doc(req.params.userId);
+        var doc = users.doc(req.params.userId);
         doc.get().then(user => {
             if (user.exists) {
                 return res.status(200).json({ "id": user.id, "user": user.data() });
@@ -46,7 +41,7 @@ router.route('/:orgId/:userId')
         });
     })
     .put((req, res) => {
-        var doc = finder.doc(req.parans.orgId).collection("User").doc(req.params.userId);
+        var doc = users.doc(req.params.userId);
         doc.update(req.body).then(() => {
             return res.status(200).json({"message": "Successful update"});
         }).catch(() => {
@@ -54,14 +49,14 @@ router.route('/:orgId/:userId')
         })
     })
     .delete((req, res) => {
-        var doc = finder.doc(req.parans.orgId).collection("User").doc(req.params.userId);
+        var doc = users.doc(req.params.userId);
         doc.delete().then(() => {
             return res.status(200).json({"message": "Successful Delete"});
         }).catch(() => {
             return res.status(404).json({"message": "Fail"});
         })
     })
-
+/*
 router.route('/:orgId/find/:username')
     .get((req, res) => {
         var doc = finder.doc(req.parans.orgId).collection("User").where("name", "=" ,req.params.username);
@@ -79,15 +74,15 @@ router.route('/:orgId/find/:username')
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
         });
     })
-
-router.route('/login/:orgId/:userId/:pass')
-    .get((req, res) => {
-        var doc = firestore.collection("Finder").doc(req.params.orgId).collection("User").doc(req.params.userId);
+*/
+router.route('/login')
+    .post((req, res) => {
+        var doc = users.doc(req.body.username);
         doc.get().then(user => {
-            if (user.exists && user.data()['pass'] === req.params.pass) {
+            if (user.exists && user.data()['password'] === req.body.password) {
                 return res.status(200).json({ "id": user.id, "user": user.data() });
             } else {
-                return res.status(404).json({ "message": "git gud" });
+                return res.status(404).json({ "message": "username or password incorrect." });
             }
         }).catch((error) => {
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });

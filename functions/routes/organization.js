@@ -44,7 +44,7 @@ router.route('/:orgId')
             return res.status(400).json({ "message": "Unable to connect to Firestore. ORG" });
         });
     })
-
+/*
 router.route('/find/:orgname')
     .get((req, res) => {
         var doc = finder.where("name", "=" ,req.params.orgname);
@@ -58,5 +58,5 @@ router.route('/find/:orgname')
             return res.status(400).json({ "message": "Unable to connect to Firestore. ORG" });
         });
     })
-
+*/
 module.exports = router;
