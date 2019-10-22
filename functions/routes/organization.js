@@ -1,10 +1,10 @@
 const router = require("express").Router();
 const firestore = require('../firestore')
-const userRouter = require('./user')
+//const userRouter = require('./user')
 
 var finder = firestore.collection("Finder");
 
-router.use('/:orgId/user', userRouter)
+//router.use('/:orgId/user', userRouter)
 
 router.route('/')
     .post((req, res) => {

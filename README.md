@@ -1,6 +1,9 @@
-/user               get | post <br>
-/user/:userid       get | post | delete <br>
-/user/find/:name    get <br>
+/organization                       post / get <br>
+/organization/:orgId                get <br>
+
+/user/:orgId                        get / post <br>
+/user/:orgId/:userid                get / post / delete <br>
+/user/login//:orgId/:userid/:pass   get <br>
 
 
 Finder
