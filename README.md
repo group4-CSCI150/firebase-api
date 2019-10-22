@@ -1,6 +1,9 @@
-/user &emsp &emsp get / post <br>
-/user/byID/:userid &emsp &emsp get / post / delete <br>
-/user/login &emsp &emsp post <br>
+/user
+ - get / post <br>
+/user/byID/:userid 
+ - get / post / delete <br>
+/user/login
+ - post <br>
 
 
 Finder
