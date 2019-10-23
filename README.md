@@ -1,7 +1,7 @@
 /user
  - get / post <br>
 /user/byID/:userid 
- - get / post / delete <br>
+ - get / put / delete <br>
 /user/login
  - post <br>
 
