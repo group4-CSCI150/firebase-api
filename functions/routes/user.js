@@ -9,7 +9,7 @@ router.route('/')
         if (req.body)
         doc.doc(req.body.username).set(req.body)
             .then(user => {
-                return res.status(200).json({ "id": user.id });
+                return res.status(200).json({ "id": user.id, message: "USER CREATED" });
             }).catch((error) => {
                 return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
             });
@@ -19,7 +19,7 @@ router.route('/')
         var all = {'users' : []};
         doc.get().then(users => {
             users.forEach(element => {
-                all['users'].push({"id": element.id,  "user": element.data() });
+                all['users'].push({"id": element.id,  "user": element.data(), message: "ALL users returned" });
             });
             return res.status(200).json(all);
         }).catch((error) => {
@@ -32,7 +32,7 @@ router.route('/byID/:userId')
         var doc = users.doc(req.params.userId);
         doc.get().then(user => {
             if (user.exists) {
-                return res.status(200).json({ "id": user.id, "user": user.data() });
+                return res.status(200).json({ "id": user.id, "user": user.data(), message: "GOT USER by ID" });
             } else {
                 return res.status(404).json({ "message": "User ID not found." });
             }
