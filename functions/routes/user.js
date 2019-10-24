@@ -7,7 +7,7 @@ router.route('/')
     .post((req, res) => {
         var doc = users;
         if (req.body)
-        doc.add(req.body)
+        doc.doc(req.body.username).set(req.body)
             .then(user => {
                 return res.status(200).json({ "id": user.id });
             }).catch((error) => {
@@ -57,9 +57,9 @@ router.route('/byID/:userId')
         })
     })
 /*
-router.route('/:orgId/find/:username')
+router.route('/find/:username')
     .get((req, res) => {
-        var doc = finder.doc(req.parans.orgId).collection("User").where("name", "=" ,req.params.username);
+        var doc = users.where("name", "=" ,req.params.username);
         var all = {'users' : []};
         doc.get().then(users => {
             users.forEach(element => {
