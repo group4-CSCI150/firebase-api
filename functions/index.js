@@ -1,12 +1,15 @@
 
 const functions = require("firebase-functions")
 const express = require("express");
+const cors = require('cors');
+
 //const organizationRouter = require('./routes/organization')
 const userRouter = require('./routes/user')
 
 /* Express */
 const app = express();
 
+app.use(cors({ origin: true }))
 app.use('/user', userRouter)
 //app.use('/organization', organizationRouter)
 
