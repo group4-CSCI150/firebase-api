@@ -1,10 +1,11 @@
 const router = require("express").Router();
 const firestore = require('../firestore')
+const validator = require('../validator/validator')
 
 var users = firestore.collection("Finder").doc("FS").collection("User");
 
 router.route('/')
-    .post((req, res) => {
+    .post(validator.post, (req, res) => {
         var doc = users;
         if (req.body)
         doc.doc(req.body.username).set(req.body)
@@ -19,7 +20,9 @@ router.route('/')
         var all = {'users' : []};
         doc.get().then(users => {
             users.forEach(element => {
-                all['users'].push({"id": element.id,  "user": element.data(), message: "ALL users returned" });
+                var userdata = element.data();
+                delete userdata['password'];
+                all['users'].push({"user": userdata, message: "ALL users returned" });
             });
             return res.status(200).json(all);
         }).catch((error) => {
@@ -32,7 +35,9 @@ router.route('/byID/:userId')
         var doc = users.doc(req.params.userId);
         doc.get().then(user => {
             if (user.exists) {
-                return res.status(200).json({ "id": user.id, "user": user.data(), message: "GOT USER by ID" });
+                var userdata = user.data();
+                delete userdata['password'];
+                return res.status(200).json({"user": userdata, message: "GOT USER by ID" });
             } else {
                 return res.status(404).json({ "message": "User ID not found." });
             }
@@ -76,14 +81,37 @@ router.route('/find/:username')
     })
 */
 router.route('/login')
-    .post((req, res) => {
+    .post(validator.login, (req, res) => {
         var doc = users.doc(req.body.username);
         doc.get().then(user => {
             if (user.exists && user.data()['password'] === req.body.password) {
-                return res.status(200).json({ "id": user.id, "user": user.data() });
+                var userdata = user.data();
+                delete userdata['password'];
+                return res.status(200).json({ "user": userdata });
             } else {
                 return res.status(404).json({ "message": "username or password incorrect." });
             }
+        }).catch((error) => {
+            return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
+        });
+    })
+
+router.route('/finder')
+    .post((req, res) => {
+        var tags = req.body;
+        var doc = users.orderBy("tags");
+        var all = {'users' : []};
+        doc.get().then(users => {
+            users.forEach(element => {
+                if (element.data().hasOwnProperty('tags'))
+                {
+                    if (element.data()['tags'].hasOwnProperty(Object.keys(tags)[0]))
+                    {
+                        all['users'].push({"user": element.id, "tags": element.data()['tags']});
+                    }
+                }
+            });
+            return res.status(200).json(all);
         }).catch((error) => {
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
         });
