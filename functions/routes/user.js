@@ -20,13 +20,9 @@ router.route('/')
         var all = { 'users': [] };
         doc.get().then(users => {
             users.forEach(element => {
-<<<<<<< HEAD
                 var userdata = element.data();
                 delete userdata['password'];
                 all['users'].push({"user": userdata, message: "ALL users returned" });
-=======
-                all['users'].push({ "id": element.id, "user": element.data(), message: "ALL users returned" });
->>>>>>> 77957bedf3503e4cbafd846e268d1f2ac0746b7f
             });
             return res.status(200).json(all);
         }).catch((error) => {
@@ -91,10 +87,12 @@ router.route('/finder')
             users.forEach(element => {
                 if (element.data().hasOwnProperty('tags'))
                 {
-                    if (element.data()['tags'].hasOwnProperty(Object.keys(tags)[0]))
-                    {
-                        all['users'].push({"user": element.id, "tags": element.data()['tags']});
-                    }
+                    Object.keys(tags).forEach(tag => {
+                        if (element.data()['tags'].hasOwnProperty(tag))
+                        {
+                            all['users'].push({"user": element.id, "tags": element.data()['tags']});
+                        }
+                    });
                 }
             });
             return res.status(200).json(all);
