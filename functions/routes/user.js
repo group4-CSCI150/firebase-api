@@ -62,6 +62,44 @@ router.route('/byID/:userId')
         })
     })
 
+router.route('/byIDList/:userId')
+    .get((req, res) => {
+        var all = { 'users': [] };
+        var doc = users.where("friends", "array-contains", req.params.userId);
+        doc.get().then(users => {
+            users.forEach(element => {
+                var userdata = element.data();
+                delete userdata['password'];
+                all['users'].push({"user": userdata, message: "ALL users returned" });
+            });
+            return res.status(200).json(all);
+        }).catch((error) => {
+            return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
+        });
+    })
+
+router.route('/friendList')
+    .post((req, res) => {
+        var array = req.body['friends'];
+
+        var output = array.reduce(function(accumulator, currentValue){
+            var doc = users.doc(currentValue);
+            console.log("reduce ok.")
+            let user = firestore.runTransaction(t => {
+                return t.get(doc).then(doc => {
+
+                    console.log(doc.data());
+                    return;
+                })
+            })
+
+            accumulator.push(user);
+            return accumulator;
+
+        },[]);
+        return res.status(200).json({"output":output.json()});
+    })
+
 router.route('/login')
     .post(validator.login, (req, res) => {
         var doc = users.doc(req.body.username);
@@ -80,20 +118,31 @@ router.route('/login')
 
 router.route('/finder')
     .post((req, res) => {
-        var tags = req.body;
-        var doc = users.orderBy("tags");
+        var tags = req.body['tags'];
+        var doc = users; 
+        //.where("tags", "array-contains", tags[0]);
+        /*
+        tags.forEach(tag => {
+            doc.where("tags", "array-contains", tag);
+        });
+        */
         var all = {'users' : []};
+        
         doc.get().then(users => {
-            users.forEach(element => {
-                if (element.data().hasOwnProperty('tags'))
-                {
-                    Object.keys(tags).forEach(tag => {
-                        if (element.data()['tags'].hasOwnProperty(tag))
-                        {
-                            all['users'].push({"user": element.id, "tags": element.data()['tags']});
-                        }
-                    });
-                }
+            users.forEach(user => {
+                tags.forEach(tag => {
+                    if (user.data().hasOwnProperty('tags'))
+                    {
+                        user.data()['tags'].forEach(utag => {
+                            if (utag === tag)
+                            {
+                                var userdata = user.data();
+                                delete userdata['password'];
+                                all['users'].push( userdata );
+                            }
+                        }) 
+                    }
+                });
             });
             return res.status(200).json(all);
         }).catch((error) => {

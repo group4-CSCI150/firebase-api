@@ -1,5 +1,4 @@
-const { body, oneOf, param } = require('express-validator/check');
-const { validationResult } = require('express-validator/check');
+const { body, oneOf, param, validationResult } = require('express-validator');
 const errorFormater = ({ location, msg, param, value, nestedErrors }) => `${msg}`;
 const firestore = require('../firestore')
 
