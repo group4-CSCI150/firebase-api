@@ -80,19 +80,22 @@ router.route('/byIDList/:userId')
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
         });
     })
-
-router.route('/friendList')
-    .post((req, res) => {
+/*
+router.route('/friendList/:userId')
+    .get((req, res) => {
         var array = req.body['friends'];
         firestore.runTransaction(t => {
             var all = { 'users': [] };
-            array.forEach(user => {
-                t.get(user).then(doc => {
-                    var userdata = doc.data();
-                    delete userdata['password'];
-                    all['users'].push(userdata);
-                    return;
-                }).catch((error) => {return})
+            t.get(req.params.userId).then(me => {
+                me.data().friends.forEach(user => {
+                    t.get(user).then(doc => {
+                        var userdata = doc.data();
+                        delete userdata['password'];
+                        all['users'].push(userdata);
+                        return;
+                    });
+                });
+                return;
             });
             return all;
         }).then(result => {
@@ -101,7 +104,7 @@ router.route('/friendList')
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
         });
     })
-
+*/
 router.route('/addFriend')
     .put((req, res) => {
         var doc0 = users.doc(req.body.users[0]);
