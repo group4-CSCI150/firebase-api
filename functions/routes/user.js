@@ -1,7 +1,10 @@
 const router = require("express").Router();
 const firestore = require('../firestore')
 const validator = require('../validator/validator')
+const Multer = require('multer')
+const admin = require('firebase-admin');
 
+//var storage = firestore.storage();
 var users = firestore.collection("Finder").doc("FS").collection("User");
 
 router.route('/')
@@ -70,7 +73,7 @@ router.route('/byIDList/:userId')
             users.forEach(element => {
                 var userdata = element.data();
                 delete userdata['password'];
-                all['users'].push({"user": userdata, message: "ALL users returned" });
+                all['users'].push(userdata);
             });
             return res.status(200).json(all);
         }).catch((error) => {
@@ -81,23 +84,38 @@ router.route('/byIDList/:userId')
 router.route('/friendList')
     .post((req, res) => {
         var array = req.body['friends'];
-
-        var output = array.reduce(function(accumulator, currentValue){
-            var doc = users.doc(currentValue);
-            console.log("reduce ok.")
-            let user = firestore.runTransaction(t => {
-                return t.get(doc).then(doc => {
-
-                    console.log(doc.data());
+        firestore.runTransaction(t => {
+            var all = { 'users': [] };
+            array.forEach(user => {
+                t.get(user).then(doc => {
+                    var userdata = doc.data();
+                    delete userdata['password'];
+                    all['users'].push(userdata);
                     return;
-                })
-            })
+                }).catch((error) => {return})
+            });
+            return all;
+        }).then(result => {
+            return res.status(200).json(result);
+        }).catch((error) => {
+            return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
+        });
+    })
 
-            accumulator.push(user);
-            return accumulator;
+router.route('/addFriend')
+    .put((req, res) => {
+        var doc0 = users.doc(req.body.users[0]);
+        var doc1 = users.doc(req.body.users[1]);
 
-        },[]);
-        return res.status(200).json({"output":output.json()});
+        var batch = firestore.batch();
+        batch.update(doc0, {friends: admin.firestore.FieldValue.arrayUnion(req.body.users[1])});
+        batch.update(doc1, {friends: admin.firestore.FieldValue.arrayUnion(req.body.users[0])});
+
+        return batch.commit().then(b => {
+            return res.status(200).json({ "message": "Friend added."});
+        }).catch((error) => {
+            return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
+        });
     })
 
 router.route('/login')
@@ -119,7 +137,12 @@ router.route('/login')
 router.route('/finder')
     .post((req, res) => {
         var tags = req.body['tags'];
-        var doc = users; 
+        var doc = users;
+
+        if(tags.length === 0)
+        {
+            return res.status(400).json({ "message": "no tags send." });
+        }
         //.where("tags", "array-contains", tags[0]);
         /*
         tags.forEach(tag => {
@@ -131,16 +154,19 @@ router.route('/finder')
         doc.get().then(users => {
             users.forEach(user => {
                 tags.forEach(tag => {
-                    if (user.data().hasOwnProperty('tags'))
+                    if (user.data()["username"] !== req.body.user)
                     {
-                        user.data()['tags'].forEach(utag => {
-                            if (utag === tag)
-                            {
-                                var userdata = user.data();
-                                delete userdata['password'];
-                                all['users'].push( userdata );
-                            }
-                        }) 
+                        if (user.data().hasOwnProperty('tags'))
+                        {
+                            user.data()['tags'].forEach(utag => {
+                                if (utag === tag)
+                                {
+                                    var userdata = user.data();
+                                    delete userdata['password'];
+                                    all['users'].push( userdata );
+                                }
+                            }) 
+                        }
                     }
                 });
             });
@@ -149,5 +175,24 @@ router.route('/finder')
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
         });
     })
+/*
+const multer = Multer({
+    storage: Multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    }
+});
 
+router.route('/uploadImage/:userId')
+    .post(multer.single('file'), (req, res) => {
+        console.log('1')
+        var ref = storage.ref().child(req.params.userId + ".jpg");
+        console.log('2')
+        ref.put(req.file).then(user => {
+            return res.status(200).json({ "message": "Successful Upload." });
+        }).catch((error) => {
+            return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
+        });
+    })
+*/
 module.exports = router;

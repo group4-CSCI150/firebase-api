@@ -1,0 +1,23 @@
+{
+  "name": "firebase-api",
+  "version": "1.0.0",
+  "description": "1. /user\r  - get (returns all users)\r  - post (adds a new user)\r 2. /user/byID/:userid \r  - get (gets data by id)\r  - put (updates data by id)\r  - delete\r 3. /user/login\r  - post",
+  "main": "index.js",
+  "dependencies": {
+    "express-validator": "^6.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/group4-CSCI150/firebase-api.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/group4-CSCI150/firebase-api/issues"
+  },
+  "homepage": "https://github.com/group4-CSCI150/firebase-api#readme"
+}
