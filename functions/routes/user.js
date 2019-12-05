@@ -1,7 +1,10 @@
 const router = require("express").Router();
 const firestore = require('../firestore')
 const validator = require('../validator/validator')
+const Multer = require('multer')
+const admin = require('firebase-admin');
 
+//var storage = firestore.storage();
 var users = firestore.collection("Finder").doc("FS").collection("User");
 
 router.route('/')
@@ -62,6 +65,62 @@ router.route('/byID/:userId')
         })
     })
 
+router.route('/byIDList/:userId')
+    .get((req, res) => {
+        var all = { 'users': [] };
+        var doc = users.where("friends", "array-contains", req.params.userId);
+        doc.get().then(users => {
+            users.forEach(element => {
+                var userdata = element.data();
+                delete userdata['password'];
+                all['users'].push(userdata);
+            });
+            return res.status(200).json(all);
+        }).catch((error) => {
+            return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
+        });
+    })
+/*
+router.route('/friendList/:userId')
+    .get((req, res) => {
+        var array = req.body['friends'];
+        firestore.runTransaction(t => {
+            var all = { 'users': [] };
+            t.get(req.params.userId).then(me => {
+                me.data().friends.forEach(user => {
+                    t.get(user).then(doc => {
+                        var userdata = doc.data();
+                        delete userdata['password'];
+                        all['users'].push(userdata);
+                        return;
+                    });
+                });
+                return;
+            });
+            return all;
+        }).then(result => {
+            return res.status(200).json(result);
+        }).catch((error) => {
+            return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
+        });
+    })
+*/
+router.route('/addFriend')
+    .put((req, res) => {
+        var doc0 = users.doc(req.body.users[0]);
+        var doc1 = users.doc(req.body.users[1]);
+
+        var batch = firestore.batch();
+        batch.update(doc0, {friends: admin.firestore.FieldValue.arrayUnion(req.body.users[1])});
+        batch.update(doc1, {friends: admin.firestore.FieldValue.arrayUnion(req.body.users[0])});
+
+        return batch.commit().then(b => {
+            return res.status(200).json({ "message": "Friend added."});
+        }).catch((error) => {
+            return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
+        });
+    })
+
 router.route('/login')
     .post(validator.login, (req, res) => {
         var doc = users.doc(req.body.username);
@@ -80,25 +139,63 @@ router.route('/login')
 
 router.route('/finder')
     .post((req, res) => {
-        var tags = req.body;
-        var doc = users.orderBy("tags");
+        var tags = req.body['tags'];
+        var doc = users;
+
+        if(tags.length === 0)
+        {
+            return res.status(400).json({ "message": "no tags send." });
+        }
+        //.where("tags", "array-contains", tags[0]);
+        /*
+        tags.forEach(tag => {
+            doc.where("tags", "array-contains", tag);
+        });
+        */
         var all = {'users' : []};
+        
         doc.get().then(users => {
-            users.forEach(element => {
-                if (element.data().hasOwnProperty('tags'))
-                {
-                    Object.keys(tags).forEach(tag => {
-                        if (element.data()['tags'].hasOwnProperty(tag))
+            users.forEach(user => {
+                tags.forEach(tag => {
+                    if (user.data()["username"] !== req.body.user)
+                    {
+                        if (user.data().hasOwnProperty('tags'))
                         {
-                            all['users'].push({"user": element.id, "tags": element.data()['tags']});
+                            user.data()['tags'].forEach(utag => {
+                                if (utag === tag)
+                                {
+                                    var userdata = user.data();
+                                    delete userdata['password'];
+                                    all['users'].push( userdata );
+                                }
+                            }) 
                         }
-                    });
-                }
+                    }
+                });
             });
             return res.status(200).json(all);
         }).catch((error) => {
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
         });
     })
+/*
+const multer = Multer({
+    storage: Multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    }
+});
 
+router.route('/uploadImage/:userId')
+    .post(multer.single('file'), (req, res) => {
+        console.log('1')
+        var ref = storage.ref().child(req.params.userId + ".jpg");
+        console.log('2')
+        ref.put(req.file).then(user => {
+            return res.status(200).json({ "message": "Successful Upload." });
+        }).catch((error) => {
+            return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
+        });
+    })
+*/
 module.exports = router;
