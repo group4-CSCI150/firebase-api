@@ -5,7 +5,7 @@ const validator = require('../validator/validator')
 var messageCollection = firestore.collection("Finder").doc("FS").collection("ChatMessages");
 
 async function sendMessage(req, res) {
-    if (!req.body || !req.body.from || !req.body.to || !req.body.text) {
+    if (!req.body || !req.body.from || !req.body.to || !req.body.text || !req.body.createdAt) {
         return res.status(200).json({ message: 'Invalid request' });
     }
     var reqUsername = req.body.from;
@@ -15,6 +15,7 @@ async function sendMessage(req, res) {
             from: req.body.from,
             to: req.body.to,
             text: req.body.text,
+            createdAt: req.body.createdAt,
             avatar: 'https://placeimg.com/140/140/any', // placeholder
         });
         return res.status(200).json({ message: 'Success' });
@@ -45,6 +46,7 @@ async function getMessages(req, res) {
                         from: messageData.from,
                         to: messageData.to,
                         text: messageData.text,
+                        createdAt: messageData.createdAt,
                         avatar: 'https://placeimg.com/140/140/any', // placeholder
                     }
                 )
