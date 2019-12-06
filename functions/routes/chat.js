@@ -3,12 +3,42 @@ const firestore = require('../firestore')
 const validator = require('../validator/validator')
 
 var messageCollection = firestore.collection("Finder").doc("FS").collection("ChatMessages");
+var userCollection = firestore.collection("Finder").doc("FS").collection("User");
+
+
+async function authenticate(username, identifier) {
+    try {
+        var user = await userCollection.doc(username).get();
+        if (user.exists) {
+            if (identifier.password) {
+                return user.data().password === identifier.password;
+            }
+            else if (identifier.token) {
+                return user.data().token === identifier.token;
+            }
+            else {
+                return false;
+            }
+        }
+        else {
+            return false;
+        }
+    }
+    catch (error) {
+        return false;
+    }
+}
+
 
 async function sendMessage(req, res) {
     if (!req.body || !req.body.from || !req.body.to || !req.body.text || !req.body.createdAt) {
-        return res.status(200).json({ message: 'Invalid request' });
+        return res.status(400).json({ message: 'Invalid request' });
     }
-    var reqUsername = req.body.from;
+    auth = await authenticate(req.body.from, {password: req.body.password, token: req.body.token});
+    if (!auth) {
+        return res.status(400).json({ message: 'Authentication failed' });
+    }
+    
     try {
         let msg = await messageCollection.add({
             _id: 1,
@@ -20,22 +50,29 @@ async function sendMessage(req, res) {
         });
         return res.status(200).json({ message: 'Success' });
     }
-    catch(error) {
+    catch (error) {
         return res.status(400).json({ message: 'Error adding message to collection' });
     }
 }
 
 async function getMessages(req, res) {
-    if (!req.body.username) {
+    // req.body.username is the username of the user asking for the messages
+    // req.body.from is the user that sent the message to username
+    if (!req.body.username || !req.body.from) {
         return res.status(400).json({ message: 'Invalid request' });
     }
-    var reqUsername = req.body.username;
-
+    auth = await authenticate(req.body.username, {password: req.body.password, token: req.body.token});
+    if (!auth) {
+        return res.status(400).json({ message: 'Authentication failed' });
+    }
+    
     // Retrieve messages
     try {
-        var messages = await messageCollection.where("to", "==", reqUsername).get();
+        var messagesQuery = messageCollection.where("to", "==", req.body.username).where("from", "==", req.body.from);
+        var messages = await messagesQuery.get();
         var responseData = { newMessages: [], numOfNewMessages: messages.size, message: 'incomplete' };
         if (messages.size > 0) {
+            responseData.queryReturned = true;
             messages.forEach( (message) => {
                 // Retrieve message data and place it into messageData
                 messageData = message.data();
@@ -62,7 +99,7 @@ async function getMessages(req, res) {
             return res.status(200).json(responseData);
         }
     }
-    catch(error) {
+    catch (error) {
         return res.status(400).json({ message: 'Unable to retrieve chat messages' });
     }
 }
@@ -70,7 +107,7 @@ async function getMessages(req, res) {
 router.route('/') 
     .post(async (req, res) => {
         if (!req.body || !req.body.requestType) {
-            return res.status(200).json({ message: 'Invalid request' })
+            return res.status(400).json({ message: 'Invalid request' })
         }
 
         if (req.body.requestType === 'sendMessage') {
