@@ -3,6 +3,7 @@ const firestore = require('../firestore')
 const validator = require('../validator/validator')
 const Multer = require('multer')
 const admin = require('firebase-admin');
+const uuidv4 = require('uuid/v4');
 
 //var storage = firestore.storage();
 var users = firestore.collection("Finder").doc("FS").collection("User");
@@ -122,19 +123,44 @@ router.route('/addFriend')
     })
 
 router.route('/login')
-    .post(validator.login, (req, res) => {
+    .post(validator.login, async (req, res) => {
         var doc = users.doc(req.body.username);
-        doc.get().then(user => {
+        try {
+            user = await doc.get();
             if (user.exists && user.data()['password'] === req.body.password) {
+                // Add session identifier for this user (like a cookie)
+                var sessionId = uuidv4();
+                await doc.set({"token": sessionId}, {merge: true});
+
                 var userdata = user.data();
                 delete userdata['password'];
-                return res.status(200).json({ "user": userdata });
+                return res.status(200).json({ "user": userdata, "token": sessionId });
             } else {
                 return res.status(404).json({ "message": "username or password incorrect." });
             }
-        }).catch((error) => {
+        }
+        catch (error) {
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
-        });
+        }
+    })
+
+router.route('/logintoken')
+    .post(async (req, res) => {
+        if (!req.body.username || !req.body.token) {
+            return res.status(200).json({ "message": "Invalid request"})
+        }
+        try {
+            var user = await users.doc(req.body.username).get();
+            if (user.exists && user.data()["token"] === req.body.token) {
+                return res.status(200).json({ "message": "Success" });
+            }
+            else {
+                return res.status(200).json({ "message": "Invalid credentials" });
+            }
+        }
+        catch (error) {
+            return res.status(200).json({ "message": "Unable to connect to Firestore. USER" });
+        }
     })
 
 router.route('/finder')
