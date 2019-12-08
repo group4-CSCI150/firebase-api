@@ -26,7 +26,7 @@ router.route('/')
             users.forEach(element => {
                 var userdata = element.data();
                 delete userdata['password'];
-                all['users'].push({"user": userdata, message: "ALL users returned" });
+                all['users'].push({ "user": userdata, message: "ALL users returned" });
             });
             return res.status(200).json(all);
         }).catch((error) => {
@@ -41,7 +41,7 @@ router.route('/byID/:userId')
             if (user.exists) {
                 var userdata = user.data();
                 delete userdata['password'];
-                return res.status(200).json({"user": userdata, message: "GOT USER by ID" });
+                return res.status(200).json({ "user": userdata, message: "GOT USER by ID" });
             } else {
                 return res.status(404).json({ "message": "User ID not found." });
             }
@@ -112,11 +112,11 @@ router.route('/addFriend')
         var doc1 = users.doc(req.body.users[1]);
 
         var batch = firestore.batch();
-        batch.update(doc0, {friends: admin.firestore.FieldValue.arrayUnion(req.body.users[1])});
-        batch.update(doc1, {friends: admin.firestore.FieldValue.arrayUnion(req.body.users[0])});
+        batch.update(doc0, { friends: admin.firestore.FieldValue.arrayUnion(req.body.users[1]) });
+        batch.update(doc1, { friends: admin.firestore.FieldValue.arrayUnion(req.body.users[0]) });
 
         return batch.commit().then(b => {
-            return res.status(200).json({ "message": "Friend added."});
+            return res.status(200).json({ "message": "Friend added." });
         }).catch((error) => {
             return res.status(400).json({ "message": "Unable to connect to Firestore. USER" });
         });
@@ -130,7 +130,7 @@ router.route('/login')
             if (user.exists && user.data()['password'] === req.body.password) {
                 // Add session identifier for this user (like a cookie)
                 var sessionId = uuidv4();
-                await doc.set({"token": sessionId}, {merge: true});
+                await doc.set({ "token": sessionId }, { merge: true });
 
                 var userdata = user.data();
                 delete userdata['password'];
@@ -147,7 +147,7 @@ router.route('/login')
 router.route('/logintoken')
     .post(async (req, res) => {
         if (!req.body.username || !req.body.token) {
-            return res.status(200).json({ "message": "Invalid request"})
+            return res.status(200).json({ "message": "Invalid request" })
         }
         try {
             var user = await users.doc(req.body.username).get();
@@ -164,12 +164,14 @@ router.route('/logintoken')
     })
 
 router.route('/finder')
-    .post((req, res) => {
+    .post(async (req, res) => {
         var tags = req.body['tags'];
         var doc = users;
 
-        if(tags.length === 0)
-        {
+        let currUser = await doc.doc(req.body.user).get()
+
+
+        if (tags.length === 0) {
             return res.status(400).json({ "message": "no tags send." });
         }
         //.where("tags", "array-contains", tags[0]);
@@ -178,26 +180,25 @@ router.route('/finder')
             doc.where("tags", "array-contains", tag);
         });
         */
-        var all = {'users' : []};
-        
+        var all = { 'users': [] };
+
         doc.get().then(users => {
             users.forEach(user => {
-                tags.forEach(tag => {
-                    if (user.data()["username"] !== req.body.user)
-                    {
-                        if (user.data().hasOwnProperty('tags'))
-                        {
-                            user.data()['tags'].forEach(utag => {
-                                if (utag === tag)
-                                {
-                                    var userdata = user.data();
-                                    delete userdata['password'];
-                                    all['users'].push( userdata );
-                                }
-                            }) 
+                if (!currUser.data().friends.includes(user.data().username)) {
+                    tags.forEach(tag => {
+                        if (user.data()["username"] !== req.body.user) {
+                            if (user.data().hasOwnProperty('tags')) {
+                                user.data()['tags'].forEach(utag => {
+                                    if (utag === tag) {
+                                        var userdata = user.data();
+                                        delete userdata['password'];
+                                        all['users'].push(userdata);
+                                    }
+                                })
+                            }
                         }
-                    }
-                });
+                    });
+                }
             });
             return res.status(200).json(all);
         }).catch((error) => {
