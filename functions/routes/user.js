@@ -170,7 +170,6 @@ router.route('/finder')
 
         let currUser = await doc.doc(req.body.user).get()
 
-
         if (tags.length === 0) {
             return res.status(400).json({ "message": "no tags send." });
         }
@@ -184,7 +183,7 @@ router.route('/finder')
 
         doc.get().then(users => {
             users.forEach(user => {
-                if (!currUser.data().friends.includes(user.data().username)) {
+                if (!currUser.data().friends || !currUser.data().friends.includes(user.data().username)) {
                     tags.forEach(tag => {
                         if (user.data()["username"] !== req.body.user) {
                             if (user.data().hasOwnProperty('tags')) {
